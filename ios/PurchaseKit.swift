@@ -170,6 +170,9 @@ final class PurchaseKit: RCTEventEmitter {
     public func initialize() {
         store.$availableProducts.sink { products in
             do {
+                guard !products.isEmpty else {
+                    return
+                }
                 if let payload = String(data: try JSONEncoder().encode(products), encoding: .utf8) {
                     Self.dispatch(type: "products", payload: payload)
                 }
@@ -179,6 +182,9 @@ final class PurchaseKit: RCTEventEmitter {
         }.store(in: &cancellables)
         
         store.$purchasedProducts.sink { transactions in
+            guard !transactions.isEmpty else {
+                return
+            }
             do {
                 if let payload = String(data: try JSONEncoder().encode(transactions), encoding: .utf8) {
                     Self.dispatch(type: "transactions", payload: payload)
