@@ -25,7 +25,6 @@ Requires `iOS 15+` and Android `minSdkVersion = 24`.
 
 ```sh
 yarn add react-native-purchase-kit
-
 ```
 
 ## Basic Usage
