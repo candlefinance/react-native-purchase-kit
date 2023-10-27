@@ -73,8 +73,9 @@ class PurchaseKit {
     productID: string;
     uuid: string;
   }): Promise<Transaction> {
-    const result = (await this.module.purchase(item)) as TransactionContainer;
-    return JSON.parse(result.jsonRepresentation);
+    const result = await this.module.purchase(item);
+    const container = JSON.parse(result.transaction) as TransactionContainer;
+    return JSON.parse(container.jsonRepresentation);
   }
 
   public async getProducts(productIDs: string[]): Promise<Product[]> {
@@ -95,24 +96,27 @@ class PurchaseKit {
     event: 'transactions' | 'products' | 'error',
     callback: (
       event:
-        | { kind: 'transactions'; transaction: Transaction }
+        | { kind: 'transactions'; transaction: Transaction[] }
         | { kind: 'products'; products: Product[] }
         | { kind: 'error'; error: string }
     ) => void
   ) {
     this.bridge.addListener(event, (value) => {
-      console.log(`addListener: ${event}`, value);
       if (event === 'transactions') {
-        const payload = JSON.parse(value.payload);
+        const payload = JSON.parse(value.payload) as TransactionContainer[];
         callback({
           kind: 'transactions',
-          transaction: payload,
+          transaction: payload.map((transaction) =>
+            JSON.parse(transaction.jsonRepresentation)
+          ),
         });
       } else if (event === 'products') {
-        const payload = JSON.parse(value.payload);
+        const payload = JSON.parse(value.payload) as ProductContainer[];
         callback({
           kind: 'products',
-          products: payload,
+          products: payload.map((product) =>
+            JSON.parse(product.jsonRepresentation)
+          ),
         });
       } else if (event === 'error') {
         callback({ kind: 'error', error: value.payload });
