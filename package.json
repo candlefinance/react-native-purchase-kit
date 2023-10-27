@@ -1,6 +1,6 @@
 {
   "name": "react-native-purchase-kit",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "StoreKit 2 and Billing API for React Native",
   "main": "lib/commonjs/index",
   "module": "lib/module/index",
