@@ -1,5 +1,65 @@
 import { NativeEventEmitter, NativeModules } from 'react-native';
 
+export type Product = {
+  attributes: {
+    description: {
+      standard: string;
+    };
+    icuLocale: string;
+    isFamilyShareable: number;
+    kind: string;
+    name: string;
+    offerName: string;
+    offers: {
+      currencyCode: string;
+      discounts: any[];
+      price: string;
+      priceFormatted: string;
+      recurringSubscriptionPeriod: string;
+    }[];
+    subscriptionFamilyId: string;
+  };
+  href: string;
+  id: string;
+  type: string;
+};
+
+type ProductContainer = {
+  id: string;
+  jsonRepresentation: string;
+};
+
+export type Transaction = {
+  productId: string;
+  environment: string;
+  quantity: number;
+  bundleId: string;
+  appAccountToken: string;
+  originalTransactionId: string;
+  isUpgraded: boolean;
+  expiresDate: number;
+  deviceVerificationNonce: string;
+  signedDate: number;
+  subscriptionGroupIdentifier: string;
+  purchaseDate: number;
+  type: string;
+  transactionId: string;
+  webOrderLineItemId: string;
+  deviceVerification: string;
+  inAppOwnershipType: string;
+  originalPurchaseDate: number;
+};
+
+type TransactionContainer = {
+  id: number;
+  jsonRepresentation: string;
+};
+
+export type Event =
+  | { kind: 'transactions'; transaction: Transaction }
+  | { kind: 'products'; products: Product[] }
+  | { kind: 'error'; error: string };
+
 class PurchaseKit {
   module = NativeModules.PurchaseKit;
   private bridge: NativeEventEmitter;
@@ -9,12 +69,19 @@ class PurchaseKit {
     this.module.initialize();
   }
 
-  public purchase(item: { productID: string; token: string }): Promise<any> {
-    return this.module.purchase(item);
+  public async purchase(item: {
+    productID: string;
+    uuid: string;
+  }): Promise<Transaction> {
+    const result = (await this.module.purchase(item)) as TransactionContainer;
+    return JSON.parse(result.jsonRepresentation);
   }
 
-  public getProducts(productIDs: string[]): Promise<any> {
-    return this.module.getProducts(productIDs);
+  public async getProducts(productIDs: string[]): Promise<Product[]> {
+    const result = (await this.module.getProducts(
+      productIDs
+    )) as ProductContainer;
+    return JSON.parse(result.jsonRepresentation);
   }
 
   public readReceipt(): Promise<string> {
@@ -27,11 +94,29 @@ class PurchaseKit {
 
   public addListener(
     event: 'transactions' | 'products' | 'error',
-    callback: (event: any) => void
+    callback: (
+      event:
+        | { kind: 'transactions'; transaction: Transaction }
+        | { kind: 'products'; products: Product[] }
+        | { kind: 'error'; error: string }
+    ) => void
   ) {
     this.bridge.addListener(event, (value) => {
-      const payload = JSON.parse(value.payload);
-      callback(payload);
+      if (event === 'transactions') {
+        const payload = JSON.parse(value.payload) as TransactionContainer;
+        callback({
+          kind: 'transactions',
+          transaction: JSON.parse(payload.jsonRepresentation),
+        });
+      } else if (event === 'products') {
+        const payload = JSON.parse(value.payload) as ProductContainer;
+        callback({
+          kind: 'products',
+          products: JSON.parse(payload.jsonRepresentation),
+        });
+      } else if (event === 'error') {
+        callback({ kind: 'error', error: value.payload });
+      }
     });
   }
 

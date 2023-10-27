@@ -8,13 +8,9 @@ export default function App() {
 
   React.useEffect(() => {
     kit.addListener('transactions', (event) => {
-      console.log(event);
-    });
-    kit.addListener('products', (event) => {
-      console.log(event);
-    });
-    kit.addListener('error', (event) => {
-      console.log(event);
+      if (event.kind === 'transactions') {
+        console.log(event.transaction);
+      }
     });
   }, []);
 
@@ -28,7 +24,7 @@ export default function App() {
       case 1:
         const result = await kit.purchase({
           productID: 'com.example.product',
-          token: 'token',
+          uuid: 'token',
         });
         console.log(result);
         break;

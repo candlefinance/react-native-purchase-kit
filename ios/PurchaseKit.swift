@@ -45,7 +45,9 @@ final class StoreKitObservedModel: ObservableObject {
             switch verification {
             case .verified(let transaction):
                 await transaction.finish()
-                self.purchasedProducts.insert(transaction)
+                if !purchasedProducts.contains(transaction) {
+                    purchasedProducts.insert(transaction)
+                }
                 return transaction
             case .unverified:
                 throw PurchaseError.failed
@@ -63,7 +65,16 @@ final class StoreKitObservedModel: ObservableObject {
             let products = try await Product.products(
                 for: Set(products)
             )
-            self.availableProducts = products
+            if products.isEmpty {
+                throw ProductError.notFound
+            }
+
+            products.forEach { product in
+                if !availableProducts.contains(product) {
+                    availableProducts.append(product)
+                }
+            }            
+
             return products
         } catch {
             print("Failed to fetch products.")
@@ -92,7 +103,9 @@ final class StoreKitObservedModel: ObservableObject {
         switch result {
         case .verified(let transaction):
             print("Transaction verified in listener")
-            self.purchasedProducts.insert(transaction)
+            if !purchasedProducts.contains(transaction) {
+                purchasedProducts.insert(transaction)
+            }
             await transaction.finish()
         case .unverified:
             print("Transaction unverified")
@@ -106,7 +119,9 @@ final class StoreKitObservedModel: ObservableObject {
             // TODO: review this
             if transaction.revocationDate == nil {
                 print("Transaction", transaction)
-                purchasedProducts.insert(transaction)
+                if !purchasedProducts.contains(transaction) {
+                    purchasedProducts.insert(transaction)
+                }
             } else {
                 print("Removed transaction", transaction)
                 purchasedProducts.remove(transaction)
@@ -291,7 +306,7 @@ extension Product: Encodable {
         try container.encode(id, forKey: .id)
         try container
             .encode(
-                try? JSONSerialization.data(withJSONObject: jsonRepresentation),
+                String(data: jsonRepresentation, encoding: .utf8),
                 forKey: .jsonRepresentation
             )
     }
@@ -306,7 +321,7 @@ extension Transaction: Encodable {
         try container.encode(id, forKey: .id)
         try container
             .encode(
-                try? JSONSerialization.data(withJSONObject: jsonRepresentation),
+                String(data: jsonRepresentation, encoding: .utf8),
                 forKey: .jsonRepresentation
             )
     }
