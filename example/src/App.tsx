@@ -18,13 +18,13 @@ export default function App() {
     console.log(`Button ${buttonNumber} pressed`);
     switch (buttonNumber) {
       case 0:
-        const products = await kit.getProducts(['com.example.product']);
+        const products = await kit.getProducts(['monthly_subscription']);
         console.log(products);
         break;
       case 1:
         const result = await kit.purchase({
-          productID: 'com.example.product',
-          uuid: 'token',
+          productID: 'monthly_subscription',
+          uuid: 'uuid',
         });
         console.log(result);
         break;
