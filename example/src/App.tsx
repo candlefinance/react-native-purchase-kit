@@ -1,18 +1,55 @@
 import * as React from 'react';
 
-import { StyleSheet, View, Text } from 'react-native';
-import { multiply } from 'react-native-purchase-kit';
+import { Button, StyleSheet, View } from 'react-native';
+import PurchaseKit from 'react-native-purchase-kit';
 
 export default function App() {
-  const [result, setResult] = React.useState<number | undefined>();
+  const kit = new PurchaseKit();
 
   React.useEffect(() => {
-    multiply(3, 7).then(setResult);
+    kit.addListener('transactions', (event) => {
+      console.log(event);
+    });
+    kit.addListener('products', (event) => {
+      console.log(event);
+    });
+    kit.addListener('error', (event) => {
+      console.log(event);
+    });
   }, []);
+
+  const handleButtonPress = async (buttonNumber: number) => {
+    console.log(`Button ${buttonNumber} pressed`);
+    switch (buttonNumber) {
+      case 0:
+        const products = await kit.getProducts(['com.example.product']);
+        console.log(products);
+        break;
+      case 1:
+        const result = await kit.purchase({
+          productID: 'com.example.product',
+          token: 'token',
+        });
+        console.log(result);
+        break;
+      case 2:
+        kit.getRecentTransactions();
+        break;
+      case 3:
+        const receipt = await kit.readReceipt();
+        console.log(receipt);
+        break;
+      default:
+        break;
+    }
+  };
 
   return (
     <View style={styles.container}>
-      <Text>Result: {result}</Text>
+      <Button title="load products" onPress={() => handleButtonPress(0)} />
+      <Button title="purchase" onPress={() => handleButtonPress(1)} />
+      <Button title="get transactions" onPress={() => handleButtonPress(2)} />
+      <Button title="read receipt" onPress={() => handleButtonPress(3)} />
     </View>
   );
 }

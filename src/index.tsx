@@ -1,22 +1,43 @@
-import { NativeModules, Platform } from 'react-native';
+import { NativeEventEmitter, NativeModules } from 'react-native';
 
-const LINKING_ERROR =
-  `The package 'react-native-purchase-kit' doesn't seem to be linked. Make sure: \n\n` +
-  Platform.select({ ios: "- You have run 'pod install'\n", default: '' }) +
-  '- You rebuilt the app after installing the package\n' +
-  '- You are not using Expo Go\n';
+class PurchaseKit {
+  module = NativeModules.PurchaseKit;
+  private bridge: NativeEventEmitter;
 
-const PurchaseKit = NativeModules.PurchaseKit
-  ? NativeModules.PurchaseKit
-  : new Proxy(
-      {},
-      {
-        get() {
-          throw new Error(LINKING_ERROR);
-        },
-      }
-    );
+  public constructor() {
+    this.bridge = new NativeEventEmitter(this.module);
+    this.module.initialize();
+  }
 
-export function multiply(a: number, b: number): Promise<number> {
-  return PurchaseKit.multiply(a, b);
+  public purchase(item: { productID: string; token: string }): Promise<any> {
+    return this.module.purchase(item);
+  }
+
+  public getProducts(productIDs: string[]): Promise<any> {
+    return this.module.getProducts(productIDs);
+  }
+
+  public readReceipt(): Promise<string> {
+    return this.module.getReceipt();
+  }
+
+  public getRecentTransactions(): void {
+    return this.module.getRecentTransactions();
+  }
+
+  public addListener(
+    event: 'transactions' | 'products' | 'error',
+    callback: (event: any) => void
+  ) {
+    this.bridge.addListener(event, (value) => {
+      const payload = JSON.parse(value.payload);
+      callback(payload);
+    });
+  }
+
+  public removeListener(event: 'transactions' | 'products' | 'error') {
+    this.bridge.removeAllListeners(event);
+  }
 }
+
+export default PurchaseKit;
