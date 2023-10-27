@@ -238,7 +238,7 @@ final class PurchaseKit: RCTEventEmitter {
 
 struct InputConfig: Codable {
     let productID: String
-    let token: String
+    let uuid: String
 }
 
 extension PurchaseKit {
@@ -251,7 +251,7 @@ extension PurchaseKit {
                     .decode(InputConfig.self, from: input)
                 let result = try await store.purchase(
                     productID: decoded.productID,
-                    token: decoded.token
+                    token: decoded.uuid
                 )
                 if let payload = String(data: try JSONEncoder().encode(result), encoding: .utf8) {
                     resolve([

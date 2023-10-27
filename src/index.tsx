@@ -78,10 +78,9 @@ class PurchaseKit {
   }
 
   public async getProducts(productIDs: string[]): Promise<Product[]> {
-    const result = (await this.module.getProducts(
-      productIDs
-    )) as ProductContainer;
-    return JSON.parse(result.jsonRepresentation);
+    const result = await this.module.getProducts(productIDs);
+    const products = JSON.parse(result.products) as ProductContainer[];
+    return products.map((product) => JSON.parse(product.jsonRepresentation));
   }
 
   public readReceipt(): Promise<string> {
@@ -102,17 +101,18 @@ class PurchaseKit {
     ) => void
   ) {
     this.bridge.addListener(event, (value) => {
+      console.log(`addListener: ${event}`, value);
       if (event === 'transactions') {
-        const payload = JSON.parse(value.payload) as TransactionContainer;
+        const payload = JSON.parse(value.payload);
         callback({
           kind: 'transactions',
-          transaction: JSON.parse(payload.jsonRepresentation),
+          transaction: payload,
         });
       } else if (event === 'products') {
-        const payload = JSON.parse(value.payload) as ProductContainer;
+        const payload = JSON.parse(value.payload);
         callback({
           kind: 'products',
-          products: JSON.parse(payload.jsonRepresentation),
+          products: payload,
         });
       } else if (event === 'error') {
         callback({ kind: 'error', error: value.payload });
