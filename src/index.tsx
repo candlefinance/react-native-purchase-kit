@@ -69,11 +69,11 @@ class PurchaseKit {
     this.module.initialize();
   }
 
-  public async purchase(item: {
+  public async purchase(product: {
     productID: string;
     uuid: string;
   }): Promise<Transaction> {
-    const result = await this.module.purchase(item);
+    const result = await this.module.purchase(product);
     const container = JSON.parse(result.transaction) as TransactionContainer;
     return JSON.parse(container.jsonRepresentation);
   }
